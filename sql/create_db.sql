@@ -4,17 +4,9 @@ USE `ymtk`;
 
 CREATE TABLE `lt_codes` (
   `id` int(64) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `uniq_key` varchar(64) NOT NULL DEFAULT '',
+  `uniq_key` varchar(64) NOT NULL UNIQUE,
   `path` text NOT NULL,
   `owner` int(64) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `lt_codes_points` (
-  `id` int(64) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `code_id` int(64) NOT NULL,
   `point_id` int(64) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -26,7 +18,7 @@ CREATE TABLE `lt_gifts` (
   `name` text,
   `grade` varchar(8) DEFAULT NULL,
   `booth` text,
-  `is_stock` tinyint(1) NOT NULL DEFAULT '1',
+  `is_stock` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -38,7 +30,8 @@ CREATE TABLE `lt_gift_histories` (
   `gift_id` int(64) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  UNIQUE(user_id, gift_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE `lt_points` (
@@ -59,12 +52,13 @@ CREATE TABLE `lt_point_histories` (
   `result` int(32) NOT NULL DEFAULT '0',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  UNIQUE(user_id, code_id) 
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE `lt_users` (
   `id` int(64) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `mail` varchar(64) NOT NULL DEFAULT '',
+  `mail` varchar(64) NOT NULL UNIQUE,
   `name` varchar(32) DEFAULT '',
   `circle` varchar(32) DEFAULT '',
   `is_participant` tinyint(1) NOT NULL DEFAULT '0',
@@ -77,3 +71,4 @@ CREATE TABLE `lt_users` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+

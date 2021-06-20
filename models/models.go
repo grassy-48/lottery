@@ -2,13 +2,17 @@ package models
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"lottery/config"
 	"math/rand"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/k0kubun/pp"
 )
 
 type Model struct {
@@ -50,6 +54,7 @@ type LtCode struct {
 	UniqKey string `json:"uniq_key"`
 	Path    string `json:"path"`
 	Owner   int    `json:"owner"`
+	PointID int    `json:"point_id"`
 }
 
 type LtCodesPoint struct {
@@ -82,21 +87,36 @@ func GetUser(user *LtUser) {
 	Db.Where(user).Or(LtUser{Mail: user.Mail}).Take(&user)
 }
 func UpsertUser(user *LtUser) *gorm.DB {
-	var c int
-	Db.Table("lt_users").Where(LtUser{Mail: user.Mail}).Count(&c)
-	if c > 0 {
-		Db.Model(&user).Updates(user)
+	pp.Println(user)
+	var tmp LtUser
+	res := Db.Find(&tmp, LtUser{Mail: user.Mail})
+	if res.RowsAffected > 0 {
+		pp.Println("exists nser")
+		Db.Model(&user).Where(LtUser{Mail: user.Mail}).Updates(
+			LtUser{
+				Name:          user.Name,
+				Circle:        user.Circle,
+				IsParticipant: user.IsParticipant,
+				IsCreator:     user.IsCreator,
+			},
+		)
 	} else {
+		pp.Println("new user")
 		Db.Where(LtUser{Mail: user.Mail}).Assign(user).FirstOrCreate(&user)
 	}
-	return Db.Find(&user)
+	pp.Println(user)
+	return Db.Find(&user, LtUser{Mail: user.Mail})
 }
 
-func GetCodes(uid int, codes *[]LtCode) *gorm.DB {
+func GetUserCodes(uid int, codes *[]LtCode) *gorm.DB {
 	return Db.Find(&codes, LtCode{Owner: uid})
 }
 
-func FindInsertCodes(uid int, codes *[]LtCode) *gorm.DB {
+func GetCode(code *LtCode) *gorm.DB {
+	return Db.Where(LtCode{UniqKey: code.UniqKey}).First(&code)
+}
+
+func FindInsertCodes(uid int, dir string, codes *[]LtCode) *gorm.DB {
 	var c int
 	Db.Table("lt_codes").Where(LtCode{Owner: uid}).Count(&c)
 	if c > 0 {
@@ -110,37 +130,68 @@ func FindInsertCodes(uid int, codes *[]LtCode) *gorm.DB {
 			srand(16),
 			srand(16),
 		}
-
 		for i := range rs {
-			c := LtCode{
-				Owner:   uid,
-				UniqKey: rs[i],
-				Path:    "/store?code=" + rs[i],
+			imgFile, err := saveImage(dir, rs[i])
+			if err != nil {
+				continue
 			}
-			Db.Create(&c)
 			pid := 1
 			if i == (len(rs) - 1) {
 				pid = 2
 			}
-			cp := LtCodesPoint{
-				CodeID:  c.ID,
+			c := LtCode{
+				Owner:   uid,
+				UniqKey: rs[i],
+				Path:    imgFile,
 				PointID: pid,
 			}
-			Db.Create(&cp)
+			Db.Create(&c)
 		}
 	}
 	return Db.Find(&codes, LtCode{Owner: uid})
 }
 
+func saveImage(dir, key string) (string, error) {
+	url := "https://api.qrserver.com/v1/create-qr-code/?data=%s&size=%dx%d&color=%s"
+	target := "https://lottery.ymtk.xyz/store?code=" + key
+	size := 240
+	color := "663300"
+	dst := dir + key + ".png"
+	response, err := http.Get(fmt.Sprintf(url, target, size, size, color))
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+	file, err := os.Create(dst)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	io.Copy(file, response.Body)
+	return key + ".png", nil
+
+}
 func GetPointFromCode(code string, point *LtPoint) *gorm.DB {
 	return Db.Table("lt_points").
 		Select("lt_points.*").
-		Joins("join lt_codes_points on lt_points.id = lt_codes_points.point_id").
-		Joins("join lt_codes on lt_codes_points.code_id = lt_codes.id").
+		Joins("join lt_codes on lt_points.id = lt_codes.point_id").
 		Where("lt_codes.uniq_key = ?", code).
 		Find(&point)
 }
-
+func CheckCanStore(uid int, code string) bool {
+	var i int
+	Db.Table("lt_point_histories").
+		Select("lt_point_histories.*").
+		Joins("join lt_codes on lt_point_histories.code_id = lt_codes.id").
+		Where("lt_codes.uniq_key = ?", code).
+		Where("lt_point_histories.user_id = ?", uid).
+		Count(&i)
+	if i > 0 {
+		return false
+	}
+	return true
+}
 func StorePointToUser(point int, user *LtUser) {
 	Db.First(&user)
 	user.Point += point

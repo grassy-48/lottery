@@ -13,6 +13,9 @@ type ResUser struct {
 	Codes []models.LtCode `json:"codes"`
 }
 
+//var dirBase = "/virtual/ymtk/public_html/ymtk.xyz/lottery/img/qr_code"
+var dirBase = "./img/qr_code/"
+
 func Create(c echo.Context) error {
 	ut := c.FormValue("type")
 	var place string
@@ -34,12 +37,18 @@ func Create(c echo.Context) error {
 		IsCreator:     is_c,
 	}
 	models.UpsertUser(&user)
+	if user.ID == 0 {
+		return c.JSON(http.StatusInternalServerError, user)
+	}
 	if !user.IsCreator {
-		return c.JSON(http.StatusOK, user)
+		res := ResUser{
+			User: &user,
+		}
+		return c.JSON(http.StatusOK, res)
 	}
 	// QRcode url path
 	var codes []models.LtCode
-	models.FindInsertCodes(int(user.Model.ID), &codes)
+	models.FindInsertCodes(int(user.Model.ID), dirBase, &codes)
 	res := ResUser{
 		User:  &user,
 		Codes: codes,
@@ -62,7 +71,7 @@ func Get(c echo.Context) error {
 	models.GetUser(&user)
 
 	var codes []models.LtCode
-	models.GetCodes(int(user.Model.ID), &codes)
+	models.GetUserCodes(int(user.Model.ID), &codes)
 	res := ResUser{
 		User:  &user,
 		Codes: codes,

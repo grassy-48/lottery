@@ -1,3 +1,5 @@
+USE `ymtk`;
+
 INSERT INTO lt_gifts(id,name,grade,booth,is_stock,created_at,updated_at,deleted_at) VALUES('1','サンプル景品1','A','https://hydrangeacypress.booth.pm/items/2763379',TRUE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,null);
 INSERT INTO lt_gifts(id,name,grade,booth,is_stock,created_at,updated_at,deleted_at) VALUES('2','サンプル景品2','A','https://hydrangeacypress.booth.pm/items/2763379',TRUE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,null);
 INSERT INTO lt_gifts(id,name,grade,booth,is_stock,created_at,updated_at,deleted_at) VALUES('3','サンプル景品3','B','https://hydrangeacypress.booth.pm/items/2763379',TRUE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,null);
