@@ -13,9 +13,10 @@ type ResUser struct {
 	Codes []models.LtCode `json:"codes"`
 }
 
-// var dirBase = "/virtual/ymtk/public_html/ymtk.xyz/lottery/img/qr_code/"
+//TODO: デプロイ時に切り替え
+var dirBase = "/virtual/ymtk/public_html/ymtk.xyz/lottery/img/qr_code/"
 
-var dirBase = "./img/qr_code/"
+//var dirBase = "./img/qr_code/"
 
 func Create(c echo.Context) error {
 	ut := c.FormValue("type")
