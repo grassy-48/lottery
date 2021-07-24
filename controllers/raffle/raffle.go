@@ -66,6 +66,10 @@ func DrawOnl(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	if len(ids) == 0 {
+		return fmt.Errorf("No valid ID.")
+	}
+
 	// 乱数で抽選
 	cid := ids[rand.Intn(len(ids))]
 	pp.Println(cid)
