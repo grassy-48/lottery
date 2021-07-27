@@ -23,6 +23,10 @@ type resElect struct {
 	Gift *models.LtGift `json:"gift"`
 }
 
+type resGifts struct {
+	CanDraw bool `json:"canDraw"`
+}
+
 func DrawEvt(c echo.Context) error {
 	uid, _ := strconv.Atoi(c.Param("userID"))
 	var user models.LtUser
@@ -109,6 +113,22 @@ func Check(c echo.Context) error {
 	}
 	res := resDraw{
 		User:    &user,
+		CanDraw: cp,
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+func CheckValidGifts(c echo.Context) error {
+	gs, err := models.GetValidGiftIds()
+	if err != nil {
+		return err
+	}
+	cp := false
+	if len(gs) > 0 {
+		cp = true
+	}
+	res := resGifts{
 		CanDraw: cp,
 	}
 

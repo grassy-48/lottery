@@ -76,7 +76,7 @@ func main() {
 		if err = c.Validate(u); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		if err = user.Create(c); err != nil {
+		if err = user.CreateNoImage(c); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		return err
@@ -175,6 +175,13 @@ func main() {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 		if err = code.Check(c); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		return err
+	})
+
+	e.GET(prefix+"/gifts", func(c echo.Context) (err error) {
+		if err = raffle.CheckValidGifts(c); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		return err

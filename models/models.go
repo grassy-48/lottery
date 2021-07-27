@@ -7,6 +7,7 @@ import (
 	"lottery/config"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -116,7 +117,7 @@ func GetCode(code *LtCode) *gorm.DB {
 	return Db.Where(LtCode{UniqKey: code.UniqKey}).First(&code)
 }
 
-func FindInsertCodes(uid int, dir string, codes *[]LtCode) *gorm.DB {
+func FindInsertCodesSave(uid int, dir string, codes *[]LtCode) *gorm.DB {
 	var c int
 	Db.Table("lt_codes").Where(LtCode{Owner: uid}).Count(&c)
 	if c > 0 {
@@ -143,6 +144,39 @@ func FindInsertCodes(uid int, dir string, codes *[]LtCode) *gorm.DB {
 				Owner:   uid,
 				UniqKey: rs[i],
 				Path:    imgFile,
+				PointID: pid,
+			}
+			Db.Create(&c)
+		}
+	}
+	return Db.Find(&codes, LtCode{Owner: uid})
+}
+
+func FindInsertCodesNoImage(uid int, dir string, codes *[]LtCode) *gorm.DB {
+	var c int
+	codeImgPath := "https://link-style.info/qrcode/%s"
+	target := "https://lottery.ymtk.xyz/store?code=%s"
+	Db.Table("lt_codes").Where(LtCode{Owner: uid}).Count(&c)
+	if c > 0 {
+		return Db.Find(&codes, LtCode{Owner: uid})
+	} else {
+		rs := []string{
+			srand(16),
+			srand(16),
+			srand(16),
+			srand(16),
+			srand(16),
+			srand(16),
+		}
+		for i := range rs {
+			pid := 1
+			if i == (len(rs) - 1) {
+				pid = 2
+			}
+			c := LtCode{
+				Owner:   uid,
+				UniqKey: rs[i],
+				Path:    fmt.Sprintf(codeImgPath, url.QueryEscape(fmt.Sprintf(target, rs[i]))),
 				PointID: pid,
 			}
 			Db.Create(&c)

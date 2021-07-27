@@ -18,7 +18,7 @@ var dirBase = "/virtual/ymtk/public_html/ymtk.xyz/lottery/img/qr_code/"
 
 //var dirBase = "./img/qr_code/"
 
-func Create(c echo.Context) error {
+func CreateNoImage(c echo.Context) error {
 	ut := c.FormValue("type")
 	var place string
 	var is_c bool
@@ -50,7 +50,47 @@ func Create(c echo.Context) error {
 	}
 	// QRcode url path
 	var codes []models.LtCode
-	models.FindInsertCodes(int(user.Model.ID), dirBase, &codes)
+	models.FindInsertCodesNoImage(int(user.Model.ID), dirBase, &codes)
+	res := ResUser{
+		User:  &user,
+		Codes: codes,
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func CreateWithImage(c echo.Context) error {
+	ut := c.FormValue("type")
+	var place string
+	var is_c bool
+	var is_p bool
+	if ut == "creator" {
+		place = c.FormValue("place")
+		is_c = true
+	}
+	if ut == "participant" {
+		is_p = true
+	}
+	user := models.LtUser{
+		Mail:          c.FormValue("mail"),
+		Name:          c.FormValue("name"),
+		Circle:        c.FormValue("circleName"),
+		Place:         place,
+		IsParticipant: is_p,
+		IsCreator:     is_c,
+	}
+	models.UpsertUser(&user)
+	if user.ID == 0 {
+		return c.JSON(http.StatusInternalServerError, user)
+	}
+	if !user.IsCreator {
+		res := ResUser{
+			User: &user,
+		}
+		return c.JSON(http.StatusOK, res)
+	}
+	// QRcode url path
+	var codes []models.LtCode
+	models.FindInsertCodesSave(int(user.Model.ID), dirBase, &codes)
 	res := ResUser{
 		User:  &user,
 		Codes: codes,
